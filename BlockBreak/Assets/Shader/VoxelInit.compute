@@ -1,0 +1,125 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Init
+//#pragma kernel Hit
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+//RWTexture2D<float4> Result;
+
+float3 rotate(float3 p, float3 rotation)
+{
+    float3 a = normalize(rotation);
+    float angle = length(rotation);
+    if (abs(angle) < 0.001) return p;
+    float s = sin(angle);
+    float c = cos(angle);
+    float r = 1.0 - c;
+    float3x3 m = float3x3(
+        a.x * a.x * r + c,
+        a.y * a.x * r + a.z * s,
+        a.z * a.x * r - a.y * s,
+        a.x * a.y * r - a.z * s,
+        a.y * a.y * r + c,
+        a.z * a.y * r + a.x * s,
+        a.x * a.z * r + a.y * s,
+        a.y * a.z * r - a.x * s,
+        a.z * a.z * r + c
+    );
+    return mul(m, p);
+}
+
+bool HitSphere(float3 p1, float3 p2, float radius1,float radius2)
+{
+	if (pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2) + pow(p1.z - p2.z, 2) <= pow(radius1 + radius2 , 2))
+	{
+		return true;
+	}
+	return false;
+}
+
+float rand(float2 seed)
+{
+	return frac(sin(dot(seed.xy, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+float3 rand3(float2 seed)
+{
+	return 2.0 * (float3(rand(seed * 1), rand(seed * 2), rand(seed * 3)) - 0.5);
+}
+
+struct VoxelData
+{
+	int id;
+	bool active;
+	bool isHit;
+	float3 position;
+	float3 rotation;
+	float3 scale;
+};
+
+//struct BallData {
+//	float3 position;
+//	float radius;
+//	bool isHit;
+//};
+
+
+
+RWStructuredBuffer<VoxelData> _VoxelData;
+//RWStructuredBuffer<BallData> _BallData;
+
+
+float3 _Scale;
+float3 _Position;
+float3 _Rotation;
+
+
+
+[numthreads(8,1,1)]
+void Init (uint id : SV_DispatchThreadID)
+{
+	// TODO: insert actual code here!
+
+	VoxelData data = _VoxelData[id];
+	data.id = id;
+	data.active = true;
+	data.isHit = false;
+	data.position = data.position;
+	data.rotation = data.rotation;
+	data.scale = _Scale;
+	_VoxelData[id] = data;
+}
+
+
+//[numthreads(8, 1, 1)]
+//void Hit(uint id : SV_DispatchThreadID)
+//{
+//	VoxelData data = _VoxelData[id];
+//	
+//
+//	//float3 worldPos = data.position;
+//	//worldPos *= _Scale;
+//	//worldPos = rotate(worldPos,_Rotation);
+//	//worldPos += _Position;
+//	//ボールと当たり判定取る
+//	//for (int i = 0; i < _BallNum; i++)
+//	//{
+//	//	
+//	//	if (HitSphere(worldPos, _BallData[i].position, _Scale.x,_BallData[i].radius))
+//	//	{
+//	//		float2 seed = float2(id + 1, id + 2);
+//	//		float3 pos = rand3(seed);
+//	//		float3 rot = rand3(seed + 3);
+//
+//	//		data.velocity = pos;
+//	//		data.angVelocity = rot;
+//	//		data.lifeTime = 2.0 + rand(seed * 7) * 2.0;
+//
+//	//		data.isHit = false;
+//	//		_BallData[i].isHit = true;
+//	//	}
+//	//}
+//	//data.active = false;
+//	_VoxelData[id] = data;
+//}
+//
+//
